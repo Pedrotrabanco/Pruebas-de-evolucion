@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador Interactivo: Pruebas de la Evolución</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f4e8; /* Papyrus White */
+            color: #334155; /* Slate Gray */
+        }
+        .nav-card, .sub-nav-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .nav-card:hover, .sub-nav-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .nav-card.active, .nav-card.current-section-active {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 3px #14B8A6; /* Muted Teal */
+            border-color: #14B8A6;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .chart-container { 
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            max-width: 900px; 
+        }
+        .quiz-option {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .quiz-option:hover {
+            background-color: #f0f9ff;
+        }
+        .quiz-option.selected {
+            background-color: #d1fae5;
+            border-color: #10b981;
+        }
+        .quiz-option.correct {
+            background-color: #d1fae5;
+            border-color: #10b981;
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+        .original-text-content h1 { font-size: 1.875rem; font-weight: bold; margin-bottom: 1rem; color: #1e293b; }
+        .original-text-content h2 { font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #334155; }
+        .original-text-content h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #475569; }
+        .original-text-content p { margin-bottom: 1rem; line-height: 1.6; } 
+        .original-text-content ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .original-text-content li { margin-bottom: 0.25rem; }
+        .analysis-card {
+            background-color: #f0f9ff; /* Light blue */
+            border-left: 4px solid #0ea5e9; /* Sky blue */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+            cursor: pointer;
+        }
+         .analysis-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-800">Pruebas de la Evolución Biológica</h1>
+            <p class="mt-3 sm:mt-4 text-md sm:text-lg text-slate-600 max-w-3xl mx-auto">Una exploración interactiva de las evidencias que sustentan la teoría de la evolución. Selecciona una categoría para aprender más o prueba tus conocimientos.</p>
+        </header>
+
+        <nav id="main-nav" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
+        </nav>
+
+        <main id="content-area" class="bg-white rounded-xl shadow-lg p-4 sm:p-6 md:p-8 min-h-[400px]">
+        </main>
+    </div>
+
+    <script>
+        const originalReportTextContent = `
+            <h1>Evidencias de la Evolución Biológica</h1>
+            <p>La evolución biológica, el proceso por el cual las especies cambian a lo largo del tiempo, es un hecho apoyado por numerosas evidencias provenientes de diversas disciplinas científicas. Estas pruebas permiten afirmar que la evolución ha existido y sigue ocurriendo.</p>
+            <p>Las principales pruebas de la evolución incluyen:</p>
+            <ul>
+                <li>Pruebas anatómicas</li>
+                <li>Pruebas embriológicas</li>
+                <li>Pruebas paleontológicas</li>
+                <li>Pruebas biogeográficas</li>
+                <li>Pruebas bioquímicas o moleculares</li>
+                <li>Pruebas taxonómicas (basadas en la clasificación de los seres vivos)</li>
+            </ul>
+            <h2>Pruebas Anatómicas</h2>
+            <p>Las pruebas anatómicas se basan en el estudio comparado de la morfología y anatomía de diferentes especies, analizando tanto su estructura como su función. Al comparar la anatomía de distintos organismos, se descubren similitudes que sugieren un ancestro biológico común. Dentro de las pruebas anatómicas, se distinguen principalmente tres tipos de órganos que ofrecen evidencia del proceso evolutivo: órganos homólogos, órganos análogos y órganos vestigiales.</p>
+            <h3>Órganos Homólogos:</h3>
+            <p>Son aquellos que tienen el mismo origen embrionario y la misma o parecida estructura interna, aunque su forma externa y su función pueden ser muy diferentes. Su semejanza estructura confirma que provienen de un antecesor común. La homología surge por un proceso de evolución divergente, donde un mismo órgano ancestral se ha modificado y adaptado a diferentes entornos y funciones. Un ejemplo clásico de órganos homólogos son las extremidades anteriores de los vertebrados. La pata de un caballo, el brazo humano, el ala de un murciélago o la aleta de un delfín comparten el mismo diseño óseo fundamental (los mismos huesos), a pesar de estar adaptados a funciones muy diversas como correr, agarrar, volar o nadar.</p>
+            <h3>Órganos Análogos:</h3>
+            <p>Estos órganos tienen una estructura interna y un origen embrionario distintos, pero presentan forma y función similares. Se encuentran en especies que no están estrechamente emparentadas, pero que se han adaptado a condiciones ambientales o necesidades funcionales similares. La semejanza en este caso es resultado de la evolución convergente, donde especies diferentes desarrollan soluciones parecidas a problemas adaptativos similares. Ejemplos de órganos análogos son las alas de una mosca (un insecto) y las de un ave (un vertebrado); ambas estructuras sirven para volar, pero su construcción interna es muy diferente. De manera similar, las aletas de los peces y las aletas de los cetáceos (mamíferos marinos) cumplen una función similar en la natación, pero sus orígenes y estructuras son distintos. El ojo de los insectos y el ojo de los mamíferos también son análogos; a pesar de sus estructuras muy diferentes, ambos cumplen la función de captar luz e imágenes. Otro caso es el "pulgar" del oso panda, que es una modificación de un hueso de la muñeca y se usa para arrancar hojas de bambú, funcionalmente similar a nuestro pulgar pero estructuralmente diferente.</p>
+            <h3>Órganos Vestigiales:</h3>
+            <p>Son órganos que están presentes en los seres vivos pero que no desempeñan ninguna función aparente en la actualidad. Se interpretan como restos atrofiados de órganos que sí eran funcionales en sus antepasados. La función original de estos órganos se ha perdido a medida que las especies han evolucionado y se han adaptado a nuevos entornos o modos de vida. Simplemente nos indican un parentesco evolutivo con otros seres vivos o formas ancestrales. En los seres humanos, se consideran órganos vestigiales estructuras como el apéndice vermiforme, los huesos soldados del cóccix (vestigio de la cola), las muelas del juicio, la plica semilunaris (resto del tercer párpado) o los músculos vestigiales que intervienen en el movimiento de las orejas. Otros ejemplos incluyen los restos de las extremidades posteriores en el esqueleto de las ballenas, que sugieren que sus antepasados eran cuadrúpedos terrestres. Estos órganos residuales no realizan ninguna función, de modo que su extirpación no causa perjuicio.</p>
+            <h2>Otras Pruebas de la Evolución</h2>
+            <h3>Pruebas Paleontológicas:</h3>
+            <p>Se basan en el estudio de los fósiles, que son los restos o vestigios de organismos que vivieron en el pasado. El registro fósil muestra que la mayoría de las especies extintas son distintas de las actuales, pero a menudo guardan parecidos morfológicos, lo que sugiere un cambio gradual a lo largo del tiempo y una continuidad genealógica. Los fósiles permiten conocer los cambios que han sufrido las especies en su evolución y reconstruir, aunque a veces de forma incompleta, la historia de linajes específicos. Las series filogenéticas de fósiles, como la evolución de la extremidad del caballo con la progresiva reducción de dedos, ilustran estos cambios graduales. Además, existen fósiles de transición, que presentan características intermedias entre dos grupos de organismos diferentes, como el Archaeopteryx, que muestra rasgos de reptil y de ave, ofreciendo una pista sobre cómo pudo ocurrir la transición entre estos grupos.</p>
+            <h3>Pruebas Biogeográficas:</h3>
+            <p>Estas pruebas se fundamentan en la distribución geográfica de los seres vivos. La existencia de especies emparentadas que habitan en regiones geográficamente cercanas o con condiciones ambientales similares apoya la idea de que evolucionaron a partir de un ancestro común y luego se diversificaron al ocupar diferentes hábitats o al quedar aisladas geográficamente. La distribución de especies como los camélidos (llamas en América del Sur, camellos en África y Asia) o las grandes aves corredoras (avestruz en África, ñandú en América del Sur, emú en Australia) sugiere que derivan de ancestros que vivieron en continentes que estuvieron unidos y luego se separaron.</p>
+            <h3>Pruebas Embriológicas:</h3>
+            <p>Se basan en la comparación del desarrollo embrionario de diferentes especies, particularmente en vertebrados. En las primeras etapas de su desarrollo, los embriones de distintos vertebrados (peces, anfibios, reptiles, aves, mamíferos) son muy similares, presentando estructuras como cola y hendiduras branquiales que sugieren un ancestro común acuático. A medida que el desarrollo avanza, los embriones van diferenciándose, siendo más parecidos entre sí aquellos que corresponden a especies más emparentadas.</p>
+            <h3>Pruebas Bioquímicas o Moleculares:</h3>
+            <p>Consisten en la comparación de ciertas moléculas esenciales que se encuentran en todos los seres vivos, como el ADN y las proteínas. Las especies más emparentadas evolutivamente presentan una mayor similitud en la secuencia de nucleótidos de su ADN y en la secuencia de aminoácidos de sus proteínas que las especies menos emparentadas. Estas similitudes moleculares proporcionan evidencia detallada sobre las relaciones de parentesco y la historia evolutiva. Por ejemplo, la comparación del ADN humano y el del chimpancé muestra una alta identidad, lo que respalda su estrecho parentesco evolutivo. El estudio de proteínas como el citocromo C, presente en la mayoría de los organismos, también revela el grado de parentesco entre diferentes especies: cuanto menor es la diferencia en la secuencia de aminoácidos, mayor es el parentesco.</p>
+            <h3>Pruebas Taxonómicas:</h3>
+            <p>La clasificación de los seres vivos (taxonomía) se basa en las semejanzas y diferencias entre ellos. La organización jerárquica de los organismos en taxones (especie, género, familia, orden, clase, phylum, reino) refleja las relaciones de parentesco evolutivo. La existencia de organismos con características intermedias entre grandes grupos (como el ornitorrinco, que tiene rasgos de reptil y mamífero) actúa como "puentes" que conectan distintos taxones y apoyan la idea de la continuidad genealógica a través de la evolución.</p>
+            <p>Todas estas líneas de evidencia, desde el estudio de los fósiles hasta la comparación de moléculas a nivel genético, convergen para respaldar de manera robusta la teoría de la evolución como el proceso que ha generado la vasta diversidad de vida en la Tierra.</p>
+        `;
+
+        const data = {
+            inicio: {
+                title: "Bienvenido al Explorador Evolutivo",
+                icon: "🔬",
+                description: "La evolución es uno de los pilares fundamentales de la biología. Esta aplicación te permite explorar sus pruebas de forma interactiva. <br><br>Utiliza las tarjetas de navegación para sumergirte en cada categoría, ver detalles, leer la explicación detallada o prueba tus conocimientos con el cuestionario.",
+                content: `<div class="chart-container h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px]"><canvas id="overviewChart"></canvas></div>`,
+            },
+            anatomicas: {
+                title: "Pruebas Anatómicas",
+                icon: "🦴",
+                description: "El estudio comparativo de la estructura y forma de los organismos revela similitudes que sugieren ancestros comunes y adaptaciones a diversos entornos.",
+                detailedText: "Las pruebas anatómicas se centran en comparar la estructura física (morfología) de diferentes organismos. Al examinar con detenimiento la anatomía, tanto de especies actuales como de aquellas que existieron en el pasado (a través de fósiles), los biólogos pueden identificar patrones de similitud fundamentales. Estas semejanzas, especialmente cuando se encuentran en estructuras que comparten un mismo origen durante el desarrollo embrionario, son interpretadas como señales de un linaje evolutivo común. Aunque las funciones de estas estructuras puedan haber variado enormemente para adaptarse a diferentes estilos de vida, su plan básico subyacente revela una historia compartida. Este tipo de análisis es esencial no solo para comprender cómo la selección natural ha ido moldeando las diversas formas de vida, sino también para reconstruir el árbol genealógico de las especies, es decir, sus relaciones de parentesco o filogenia. Dentro de este campo, se estudian principalmente tres categorías de órganos: los homólogos, que indican una herencia común; los análogos, que ilustran cómo entornos similares pueden llevar a soluciones adaptativas parecidas en linajes distintos; y los vestigiales, que son como ecos del pasado funcional de los ancestros de una especie.",
+                strengths: [
+                    "Cuando observamos que órganos en distintas especies, como el brazo humano, el ala de un murciélago o la aleta de una ballena, comparten una misma estructura ósea básica, esto sugiere fuertemente que todas estas especies descienden de un ancestro común que poseía ese patrón estructural original. Esta es una de las indicaciones más claras de parentesco evolutivo.",
+                    "El análisis comparativo de la anatomía es una herramienta poderosa para reconstruir las grandes líneas de descendencia evolutiva entre los principales grupos de seres vivos, ayudando a dibujar las ramas fundamentales del gran árbol de la vida.",
+                    "La presencia de órganos vestigiales, como el cóccix (restos de una cola) en los seres humanos o los diminutos huesos de las patas traseras incrustados en el cuerpo de algunas ballenas y serpientes, nos habla de una herencia del pasado. Son como 'recuerdos' anatómicos de estructuras que fueron útiles para sus antepasados pero que ya no cumplen la misma función."
+                ],
+                weaknesses: [
+                    "Es fundamental realizar un análisis muy cuidadoso, prestando especial atención al desarrollo embrionario y a los detalles finos de la estructura interna. De lo contrario, es fácil confundir una homología (que indica parentesco real debido a un ancestro común) con una analogía. Las analogías son similitudes en la función o apariencia que han surgido de forma independiente en diferentes linajes como respuesta a presiones ambientales similares (evolución convergente), y no indican un parentesco cercano.",
+                    "A lo largo de millones de años de evolución, algunos órganos homólogos pueden haberse modificado tan profundamente, o incluso haberse perdido por completo en ciertos grupos, que su identificación y comparación con estructuras equivalentes en otros linajes se vuelve una tarea muy compleja o, en algunos casos, imposible.",
+                    "Determinar si un órgano es verdaderamente vestigial (es decir, que ya no cumple ninguna función) puede ser más complicado de lo que parece. Algunas de estas estructuras, aunque reducidas, podrían conservar funciones secundarias o sutiles que no son obvias a primera vista, o incluso haber adquirido nuevas funciones a lo largo del tiempo."
+                ],
+                organTypes: { 
+                    homologos: {
+                        key: 'homologos', 
+                        title: "Órganos Homólogos",
+                        icon: "🔗", 
+                        description: "Estructuras con origen común pero funciones potencialmente diferentes, reflejando evolución divergente.",
+                        detailedText: "Los órganos homólogos son un concepto central en la biología evolutiva. Se definen como aquellas estructuras presentes en diferentes especies que comparten un mismo origen durante el desarrollo embrionario y una arquitectura interna fundamentalmente similar. Esta similitud estructural se debe a que fueron heredadas de un ancestro común. Sin embargo, a pesar de este origen compartido, los órganos homólogos pueden haber experimentado modificaciones significativas a lo largo de la evolución, adaptándose para desempeñar funciones muy diversas en los distintos linajes. Este proceso, donde una estructura ancestral se diversifica para cumplir nuevos roles, se conoce como evolución divergente. Un ejemplo clásico y muy ilustrativo es la extremidad anterior de los tetrápodos (vertebrados con cuatro extremidades). El brazo de un ser humano, diseñado para la manipulación; el ala de un murciélago o de un ave, adaptada para el vuelo; la aleta de una ballena o un delfín, optimizada para la natación; y la pata de un caballo, especializada para la carrera, son todos órganos homólogos. Si se examina su esqueleto, se observa el mismo patrón básico de huesos: un húmero, seguido de un radio y un cúbito, luego los huesos del carpo (muñeca), los metacarpos y las falanges (dedos). Esta correspondencia estructural, a pesar de la variedad de formas y funciones externas, es una prueba contundente de su descendencia de un ancestro común que poseía una extremidad con este plan básico. El estudio detallado de los órganos homólogos es, por lo tanto, una herramienta indispensable para establecer las relaciones de parentesco entre las especies (filogenia) y para comprender los caminos que ha seguido la diversificación evolutiva.",
+                        diagram: `<div class="p-4 border rounded-lg bg-slate-50 text-center"><p class="font-semibold">Estructura Ósea Común en Extremidades de Vertebrados</p><div class="flex flex-wrap justify-around mt-2 text-xs gap-1"><span class="p-2 bg-blue-200 rounded">Húmero</span><span class="p-2 bg-green-200 rounded">Radio/Cúbito</span><span class="p-2 bg-yellow-200 rounded">Carpos</span><span class="p-2 bg-red-200 rounded">Falanges</span></div><p class="mt-4 text-sm text-slate-500">Un mismo plan estructural básico, adaptado a diversas funciones como agarrar, volar, nadar o correr.</p></div>`
+                    },
+                    analogos: {
+                        key: 'analogos',
+                        title: "Órganos Análogos",
+                        icon: "✈️", 
+                        description: "Estructuras con diferente origen evolutivo pero funciones similares, resultado de la evolución convergente.",
+                        detailedText: "Los órganos análogos representan un fenómeno fascinante en la evolución. Se trata de estructuras que, aunque presentes en especies que no están estrechamente emparentadas (es decir, no comparten un ancestro común reciente que poseyera dicha estructura), han evolucionado de manera independiente para cumplir funciones muy similares. Esta similitud en la función, a pesar de un origen embrionario y una arquitectura interna fundamentalmente distintos, es el resultado de un proceso conocido como evolución convergente. La evolución convergente ocurre cuando diferentes linajes se enfrentan a presiones selectivas parecidas en sus respectivos ambientes y, como resultado, desarrollan 'soluciones' adaptativas similares para los mismos desafíos funcionales. Un ejemplo muy citado es el de las alas de los insectos y las alas de las aves (o de los murciélagos, que son mamíferos). Ambas estructuras están adaptadas para el vuelo, permitiendo a estos animales desplazarse por el aire. Sin embargo, su construcción es radicalmente diferente: las alas de los insectos son expansiones delgadas y membranosas de su exoesqueleto de quitina, mientras que las alas de las aves son extremidades anteriores modificadas, con una estructura interna de huesos, músculos, nervios y vasos sanguíneos, cubiertas de plumas. Otros ejemplos notables de órganos análogos incluyen la forma hidrodinámica y fusiforme del cuerpo en los peces y en los mamíferos acuáticos como los delfines y las ballenas, que facilita el desplazamiento eficiente en el agua; o los ojos complejos de los vertebrados y los de los cefalópodos (como pulpos y calamares), que, aunque capaces de formar imágenes detalladas, tienen orígenes evolutivos y vías de desarrollo completamente separadas. Es importante destacar que los órganos análogos no son indicadores de un parentesco evolutivo cercano, sino que más bien ilustran la capacidad de la selección natural para modelar soluciones adaptativas similares frente a problemas funcionales comunes en linajes muy distantes.",
+                        diagram: `<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="p-4 border rounded-lg bg-slate-50 text-center"><p class="font-semibold">Ala de Insecto (Ej: Mariposa)</p><p class="text-xs mt-2">Formada por membranas sostenidas por venas de quitina. Origen ectodérmico.</p></div><div class="p-4 border rounded-lg bg-slate-50 text-center"><p class="font-semibold">Ala de Ave</p><p class="text-xs mt-2">Extremidad anterior modificada con huesos, músculos y plumas. Origen mesodérmico.</p></div><p class="md:col-span-2 mt-2 text-sm text-slate-500 text-center">Ambas sirven para volar, pero su estructura y origen son muy diferentes.</p></div>`
+                    },
+                    vestigiales: {
+                        key: 'vestigiales',
+                        title: "Órganos Vestigiales",
+                        icon: "⏳", 
+                        description: "Restos de órganos que fueron funcionales en los antepasados de una especie pero que han perdido su función principal.",
+                        detailedText: "Los órganos vestigiales son estructuras anatómicas que se encuentran en un organismo en una forma reducida o atrofiada, habiendo perdido la mayor parte o la totalidad de su función original que sí desempeñaban en sus especies ancestrales. Estos órganos son como 'ecos' o 'remanentes' de la historia evolutiva de un linaje, y su presencia es una evidencia muy convincente del proceso de cambio evolutivo y del parentesco entre diferentes formas de vida. A medida que las especies se adaptan a nuevos entornos o cambian sus modos de vida a lo largo de generaciones, algunas estructuras que antes eran útiles pueden volverse innecesarias, o incluso representar un coste energético o un impedimento. En tales casos, la selección natural puede favorecer a aquellos individuos con versiones reducidas de estas estructuras, llevando gradualmente a su atrofia o pérdida funcional. En los seres humanos, existen varios ejemplos bien conocidos de órganos vestigiales. El apéndice vermiforme, una pequeña bolsa unida al intestino grueso, es considerado un vestigio de un ciego más grande y funcional que en nuestros antepasados herbívoros ayudaba en la digestión de la celulosa. Los huesos del cóccix, al final de la columna vertebral, son los restos fusionados de las vértebras que formaban una cola en nuestros ancestros primates. Las muelas del juicio (terceros molares) eran útiles cuando las dietas humanas eran más abrasivas y las mandíbulas más robustas, pero hoy en día a menudo causan problemas por falta de espacio. Otros ejemplos incluyen los pequeños músculos que algunas personas pueden usar para mover ligeramente las orejas (mucho más desarrollados y funcionales en otros mamíferos para orientar las orejas hacia los sonidos) o la plica semilunaris en el ángulo interno del ojo, un remanente del tercer párpado o membrana nictitante que es funcional en muchos otros vertebrados. En el reino animal, un caso notable es el de las ballenas y algunas serpientes grandes como las boas y pitones, que conservan pequeños huesos pélvicos y, en algunos casos, femorales, incrustados dentro de sus cuerpos, sin conexión con ninguna extremidad externa. Estos son claros indicadores de que sus antepasados fueron mamíferos terrestres cuadrúpedos. La existencia de órganos vestigiales es difícil de explicar sin recurrir a la teoría de la evolución por descendencia con modificación.",
+                        diagram: `<div class="p-4 border rounded-lg bg-slate-50 text-center"><p class="font-semibold">Ejemplos de Órganos Vestigiales</p><div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 text-xs"><div class="p-2 bg-orange-100 rounded text-orange-700">Cóccix humano (cola vestigial)</div><div class="p-2 bg-lime-100 rounded text-lime-700">Apéndice humano</div><div class="p-2 bg-cyan-100 rounded text-cyan-700">Muelas del juicio</div><div class="p-2 bg-purple-100 rounded text-purple-700">Huesos pélvicos en ballenas</div></div><p class="mt-4 text-sm text-slate-500">Estructuras reducidas que perdieron su función original.</p></div>`
+                    }
+                }
+            },
+            paleontologicas: { 
+                title: "Pruebas Paleontológicas", icon: "🗿", description: "El estudio de los fósiles proporciona una ventana directa a las formas de vida del pasado y evidencia el cambio gradual a lo largo del tiempo.", 
+                detailedText: "Los fósiles son los restos o huellas de organismos que vivieron en el pasado, preservados en rocas sedimentarias, ámbar, hielo u otros medios. El registro fósil es una ventana directa al pasado de la vida en la Tierra. Muestra que las especies han cambiado a lo largo del tiempo, que muchas se han extinguido y que nuevas formas han surgido. Las series filogenéticas, como la evolución de la extremidad del caballo, ilustran cambios graduales. Los fósiles de transición son especialmente importantes, ya que presentan características intermedias entre dos grupos de organismos diferentes, como el *Archaeopteryx*, que muestra rasgos de reptil (dientes, cola ósea larga) y de ave (plumas, alas). Estos fósiles son una prueba contundente de cómo pudieron ocurrir las grandes transiciones evolutivas.",
+                strengths: [
+                    "Ofrecen la única evidencia directa de las formas de vida que existieron en el pasado, permitiendo observar cambios morfológicos a través de vastas escalas de tiempo geológico.",
+                    "Los fósiles de transición son particularmente valiosos, ya que revelan formas intermedias entre grandes grupos taxonómicos, ilustrando cómo ocurrieron las principales transiciones evolutivas (por ejemplo, de peces a anfibios, o de reptiles a aves).",
+                    "Combinados con técnicas de datación radiométrica, los fósiles permiten establecer cronologías para la aparición y extinción de linajes, así como para importantes eventos evolutivos."
+                ],
+                weaknesses: [
+                    "El proceso de fosilización es un evento excepcionalmente raro que requiere condiciones muy específicas, lo que resulta en un registro fósil inherentemente incompleto, con muchos 'huecos' y linajes pobremente representados.",
+                    "Existen sesgos significativos en la conservación de fósiles; por ejemplo, los organismos con partes duras (huesos, conchas) y aquellos que vivieron en ambientes acuáticos sedimentarios tienen muchas más probabilidades de fosilizar que los organismos de cuerpo blando o terrestres.",
+                    "La interpretación de restos fósiles, especialmente si son fragmentarios, puede ser compleja y estar sujeta a diferentes reconstrucciones y debates científicos. Además, aunque las técnicas de datación son cada vez más precisas, siempre conllevan ciertos márgenes de error."
+                ]
+            },
+            biogeograficas: { 
+                title: "Pruebas Biogeográficas", icon: "🌍", description: "La distribución geográfica de los seres vivos refleja su historia evolutiva y los cambios geológicos del planeta.", 
+                detailedText: "La biogeografía estudia la distribución de los seres vivos en la Tierra y las causas que la determinan. La distribución actual de muchas especies solo puede explicarse a la luz de la evolución y de los cambios geológicos del planeta, como la deriva continental. Especies que están emparentadas evolutivamente tienden a encontrarse en regiones geográficas que estuvieron conectadas en el pasado o que son adyacentes. Por ejemplo, la presencia de marsupiales en Australia y Sudamérica, y su ausencia en otros continentes (salvo algunas excepciones), se explica por su origen en Gondwana y su posterior aislamiento. La distribución de los camélidos (llamas y vicuñas en Sudamérica; camellos y dromedarios en Asia y África) también es un ejemplo clásico. Las islas oceánicas, que nunca han estado conectadas a continentes, suelen albergar especies endémicas (únicas de ese lugar) que están estrechamente relacionadas con especies de los continentes más cercanos, lo que evidencia procesos de colonización y especiación posterior.",
+                strengths: [
+                    "Proporcionan explicaciones coherentes para los patrones de distribución de especies a escala global y regional, conectando la evolución biológica con la historia geológica de la Tierra, como la deriva de los continentes y la formación de cadenas montañosas o islas.",
+                    "La presencia de especies endémicas (aquellas que solo se encuentran en un lugar específico) en islas o regiones geográficamente aisladas constituye una fuerte evidencia de procesos de especiación que ocurren cuando las poblaciones quedan separadas y evolucionan de forma independiente.",
+                    "Ayudan a comprender cómo los eventos de dispersión y vicarianza (separación de una población ancestral por una barrera geográfica) han moldeado la diversidad actual de la vida."
+                ],
+                weaknesses: [
+                    "Los eventos fortuitos de dispersión a larga distancia (por ejemplo, semillas transportadas por aves o animales flotando en balsas naturales) pueden, en ocasiones, complicar la interpretación de los patrones de distribución que se basarían únicamente en la separación gradual de masas terrestres.",
+                    "La evolución convergente puede llevar a que especies no relacionadas desarrollen adaptaciones y apariencias similares en ambientes parecidos en diferentes partes del mundo, lo que podría malinterpretarse como una señal de parentesco cercano si no se complementa con otros tipos de evidencia, como la molecular.",
+                    "Una interpretación biogeográfica robusta requiere un buen entendimiento de la historia geológica y climática pasada de las regiones estudiadas, información que puede ser incompleta o menos precisa para ciertas áreas o periodos temporales."
+                ]
+            },
+            embriologicas: { 
+                title: "Pruebas Embriológicas", icon: "🥚", description: "La comparación del desarrollo embrionario entre diferentes especies revela similitudes tempranas que apuntan a un ancestro común.", 
+                detailedText: "El estudio del desarrollo embrionario comparado revela similitudes sorprendentes entre diferentes grupos de organismos, especialmente en las primeras etapas. Por ejemplo, los embriones de todos los vertebrados (peces, anfibios, reptiles, aves y mamíferos) pasan por una etapa en la que presentan hendiduras branquiales y una cola, aunque estas estructuras puedan desaparecer o modificarse profundamente en el adulto. Estas similitudes se interpretan como una evidencia de un ancestro común del que todos estos grupos han derivado. La famosa, aunque hoy matizada, frase de Ernst Haeckel, \"la ontogenia recapitula la filogenia\", se refería a esta idea. En invertebrados, la presencia de tipos larvales comunes, como la larva trocófora en anélidos y moluscos, también es una fuerte indicación de parentesco evolutivo, a pesar de las grandes diferencias que puedan existir entre los adultos de estos grupos.",
+                strengths: [
+                    "Las similitudes observadas en las primeras etapas del desarrollo embrionario, como la presencia de hendiduras faríngeas o una notocorda en todos los embriones de cordados, pueden revelar planes corporales fundamentales y relaciones evolutivas profundas que no son evidentes en los organismos adultos.",
+                    "En muchos grupos de invertebrados, la compartición de tipos larvales específicos (como la larva trocófora en anélidos y moluscos, o la larva nauplio en crustáceos) es una fuerte evidencia de parentesco, incluso cuando las formas adultas son morfológicamente muy dispares.",
+                    "El estudio de los genes que controlan el desarrollo (genes Hox, por ejemplo) ha proporcionado una base molecular para entender estas similitudes embrionarias y cómo pequeños cambios en la regulación de estos genes pueden llevar a grandes diferencias en la forma adulta."
+                ],
+                weaknesses: [
+                    "La afirmación clásica de Haeckel de que \"la ontogenia recapitula la filogenia\" (es decir, que el desarrollo de un individuo repite las etapas adultas de sus ancestros evolutivos) es una simplificación excesiva y, en muchos aspectos, se considera incorrecta en su formulación literal.",
+                    "Los embriones y las larvas están sujetos a sus propias presiones selectivas y pueden desarrollar adaptaciones específicas a su entorno particular (por ejemplo, para la dispersión o la alimentación planctónica), lo que puede modificar o enmascarar las características ancestrales compartidas.",
+                    "Obtener y comparar embriones en etapas de desarrollo estrictamente equivalentes para una amplia gama de especies puede ser técnicamente desafiante y requiere un conocimiento detallado de la biología del desarrollo de cada grupo."
+                ]
+            },
+            bioquimicas: {
+                title: "Pruebas Bioquímicas", icon: "🧬", description: "La comparación de moléculas esenciales como el ADN y las proteínas entre especies ofrece la evidencia más robusta y detallada del parentesco evolutivo.", 
+                detailedText: "Las pruebas bioquímicas o moleculares son unas de las más poderosas y directas para inferir relaciones evolutivas. Se basan en la comparación de moléculas fundamentales para la vida, como el ADN (ácido desoxirribonucleico), el ARN (ácido ribonucleico) y las proteínas. Todos los seres vivos comparten un código genético prácticamente universal, lo que es una fuerte evidencia de un origen común. Cuanto más estrechamente emparentadas estén dos especies, mayor será la similitud en la secuencia de nucleótidos de su ADN y en la secuencia de aminoácidos de sus proteínas. Por ejemplo, el genoma humano y el del chimpancé comparten más del 98% de identidad. Estas comparaciones permiten construir árboles filogenéticos muy detallados y cuantitativos, e incluso estimar los tiempos de divergencia entre linajes mediante la técnica del \"reloj molecular\", que asume una tasa de mutación relativamente constante para ciertos genes.",
+                strengths: [
+                    "Proporcionan una vasta cantidad de datos objetivos y cuantificables (secuencias de nucleótidos o aminoácidos) que permiten realizar comparaciones muy precisas y rigurosas entre organismos.",
+                    "La universalidad del código genético y la conservación de muchas moléculas fundamentales (como el ADN, el ARN, el ATP y ciertas proteínas como el citocromo C) permiten comparar incluso organismos muy distantemente relacionados en el árbol de la vida.",
+                    "Son la herramienta más poderosa disponible actualmente para construir árboles filogenéticos detallados y resolver relaciones de parentesco que pueden ser ambiguas si solo se consideran datos morfológicos.",
+                    "Bajo ciertas asunciones y calibraciones, las tasas de cambio molecular en secuencias de ADN o proteínas pueden utilizarse como un \"reloj molecular\" para estimar los tiempos de divergencia entre diferentes linajes evolutivos."
+                ],
+                weaknesses: [
+                    "El análisis de datos moleculares requiere equipamiento de laboratorio especializado para la secuenciación y análisis bioinformáticos complejos para procesar y comparar las secuencias.",
+                    "Especialmente en procariotas (bacterias y arqueas), el fenómeno de la transferencia horizontal de genes (THG) puede transferir material genético entre especies que no están directamente emparentadas, lo que puede complicar la reconstrucción filogenética si se basa en genes individuales susceptibles a este proceso.",
+                    "Diferentes genes y diferentes linajes de organismos pueden evolucionar a tasas moleculares distintas, lo que debe tenerse en cuenta cuidadosamente al aplicar modelos de reloj molecular y al seleccionar los marcadores genéticos apropiados para cada estudio.",
+                    "La obtención de ADN o proteínas de calidad y en cantidad suficiente a partir de fósiles muy antiguos es a menudo extremadamente difícil o imposible, lo que limita la aplicación directa de estas pruebas a muchas especies extintas."
+                ]
+            },
+            taxonomicas: {
+                title: "Pruebas Taxonómicas", icon: "📚", description: "La forma en que clasificamos a los seres vivos en una jerarquía anidada refleja de manera natural sus relaciones de descendencia con modificación.", 
+                detailedText: "La taxonomía es la ciencia de la clasificación de los seres vivos. Un sistema de clasificación natural, como el que se utiliza actualmente, agrupa a los organismos en una jerarquía de taxones (especie, género, familia, orden, clase, filo, reino) basándose en sus similitudes y diferencias, que se interpretan como reflejo de sus relaciones evolutivas. La idea es que los organismos que comparten un taxón superior (por ejemplo, todos los miembros de la familia Felidae, los félidos) descienden de un ancestro común más reciente que aquellos con los que solo comparten un taxón aún más alto (como el orden Carnivora). La existencia de organismos con características intermedias entre grandes grupos, como el ornitorrinco (que pone huevos como los reptiles pero amamanta a sus crías como los mamíferos), actúa como un \"eslabón\" o \"puente\" que apoya la idea de la continuidad genealógica y la evolución gradual.",
+                strengths: [
+                    "Un sistema de clasificación natural, que se esfuerza por agrupar a los organismos basándose en homologías (características heredadas de un ancestro común) y, cada vez más, en datos moleculares, intenta reflejar la historia evolutiva y las relaciones de descendencia de la vida.",
+                    "Proporciona un sistema lógico y jerárquico para organizar y nombrar la vasta diversidad de los seres vivos, facilitando la comunicación científica y la comprensión de los patrones biológicos.",
+                    "Una clasificación bien fundamentada tiene un considerable poder predictivo; si conocemos la posición taxonómica de un organismo, podemos inferir muchas de sus características probables basándonos en lo que sabemos de otros miembros de su grupo."
+                ],
+                weaknesses: [
+                    "Los sistemas de clasificación tempranos, basados predominantemente en la morfología externa, a menudo agrupaban incorrectamente a los organismos por analogías (similitudes debidas a la evolución convergente) en lugar de homologías, lo que llevaba a clasificaciones que no reflejaban el parentesco real.",
+                    "La definición precisa de lo que constituye una \"especie\" (el taxón fundamental) y los límites exactos entre otros taxones (como género o familia) pueden ser objeto de considerable debate científico y revisión constante.",
+                    "Los sistemas taxonómicos no son estáticos; se revisan y modifican continuamente a medida que se dispone de nueva evidencia, especialmente la proveniente de análisis moleculares, lo que puede llevar a cambios significativos y a veces controvertidos en la forma de agrupar a los organismos."
+                ]
+            },
+            explicacionDetallada: { 
+                title: "Explicación detallada",
+                icon: "📜",
+                description: "Lee la explicación completa de las pruebas evolutivas y accede a la opción para imprimirla.",
+                originalReportText: originalReportTextContent 
+            },
+            cuestionario: {
+                title: "Cuestionario Práctico", icon: "📝", description: "Pon a prueba tus conocimientos sobre las pruebas de la evolución.",
+                questions: [
+                    { text: "Las extremidades anteriores de un humano y el ala de un murciélago son ejemplos de órganos...", options: [{ text: "Análogos", correct: false }, { text: "Homólogos", correct: true }, { text: "Vestigiales", correct: false }], feedback: "Correcto. Los órganos homólogos tienen el mismo origen embrionario y estructura interna, aunque su función pueda ser diferente." },
+                    { text: "El Archaeopteryx es un ejemplo de:", options: [{ text: "Un fósil viviente", correct: false }, { text: "Un fósil de transición", correct: true }, { text: "Una prueba biogeográfica", correct: false }], feedback: "Correcto. Archaeopteryx muestra características intermedias entre reptiles y aves." },
+                    { text: "¿Qué tipo de moléculas se comparan principalmente en las pruebas bioquímicas?", options: [{ text: "ADN y proteínas", correct: true }, { text: "Carbohidratos y lípidos", correct: false }, { text: "Sales minerales", correct: false }], feedback: "Correcto. La comparación de secuencias de ADN y proteínas es fundamental en las pruebas bioquímicas." },
+                    { text: "La presencia de una larva trocófora común en anélidos y moluscos es una prueba de tipo:", options: [{ text: "Paleontológica", correct: false }, { text: "Embriológica", correct: true }, { text: "Bioquímica", correct: false }], feedback: "Correcto. Las similitudes en los estados larvales son parte de las pruebas embriológicas." },
+                    { text: "La distribución actual de los camélidos es un ejemplo de prueba:", options: [{ text: "Anatómica", correct: false }, { text: "Bioquímica", correct: false }, { text: "Biogeográfica", correct: true }], feedback: "Correcto. La biogeografía estudia la distribución de las especies y cómo esta apoya la evolución." },
+                    { text: "El apéndice en los humanos es considerado un órgano:", options: [{ text: "Homólogo", correct: false }, { text: "Análogo", correct: false }, { text: "Vestigial", correct: true }], feedback: "Correcto. El apéndice es un órgano vestigial, un remanente de una estructura que era funcional en nuestros ancestros." },
+                    { text: "¿Cuál de estas afirmaciones sobre el registro fósil es CIERTA?", options: [{ text: "Es completo y contiene todas las especies que han existido.", correct: false }, { text: "Muestra que las especies no han cambiado con el tiempo.", correct: false }, { text: "Es incompleto pero proporciona evidencia directa de vida pasada.", correct: true }], feedback: "Correcto. El registro fósil es incompleto, pero es una prueba crucial de la vida en el pasado y los cambios evolutivos." },
+                    { text: "La similitud en el código genético entre casi todos los seres vivos es una fuerte evidencia de:", options: [{ text: "Evolución convergente", correct: false }, { text: "Un ancestro común universal", correct: true }, { text: "Adaptación a ambientes similares", correct: false }], feedback: "Correcto. La universalidad del código genético sugiere un origen común para toda la vida en la Tierra." },
+                    { text: "Las alas de una mariposa y las alas de un pájaro son órganos:", options: [{ text: "Homólogos, porque sirven para volar.", correct: false }, { text: "Análogos, porque tienen diferente origen evolutivo pero similar función.", correct: true }, { text: "Vestigiales, porque no son perfectas para el vuelo.", correct: false }], feedback: "Correcto. Son análogos; cumplen la misma función (volar) pero tienen orígenes evolutivos y estructuras internas muy diferentes." },
+                    { text: "La clasificación de los seres vivos en géneros, familias, órdenes, etc., se basa en:", options: [{ text: "Únicamente en su hábitat.", correct: false }, { text: "Sus relaciones de parentesco evolutivo.", correct: true }, { text: "Su tamaño y color.", correct: false }], feedback: "Correcto. La taxonomía moderna busca agrupar a los organismos según sus relaciones evolutivas." }
+                ]
+            }
+        };
+
+        const mainNav = document.getElementById('main-nav');
+        const contentArea = document.getElementById('content-area');
+        let currentView = 'inicio';
+        let currentMainProofKey = null; 
+        let currentOrganTypeKey = null; 
+
+        let overviewChartInstance = null;
+        let currentQuestionIndex = 0;
+        let userScore = 0;
+        let quizQuestions = [];
+
+        function printOriginalText() {
+            const reportContent = data.explicacionDetallada.originalReportText; 
+            const printWindow = window.open('', '_blank', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Explicación Detallada: Pruebas de la Evolución Biológica</title>'); 
+            printWindow.document.write('<style> body { font-family: Inter, sans-serif; margin: 20px; color: #334155; } h1 { font-size: 1.8rem; font-weight: bold; margin-bottom: 1rem; color: #1e293b; } h2 { font-size: 1.5rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #334155; } h3 { font-size: 1.25rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; color: #475569; } p { margin-bottom: 1rem; line-height: 1.6; text-align: justify;} ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; } li { margin-bottom: 0.25rem; } </style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(reportContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus(); 
+            setTimeout(() => { 
+                 printWindow.print();
+                 printWindow.close();
+            }, 250);
+        }
+
+        function renderContent(key, viewType = 'main') { 
+            currentView = key; 
+            const item = data[key] || (data.anatomicas.organTypes && data.anatomicas.organTypes[key]);
+
+            if (!item) {
+                console.error("No data found for key:", key);
+                contentArea.innerHTML = "<p>Contenido no encontrado.</p>";
+                return;
+            }
+            
+            if (viewType === 'main' || viewType === 'detailedProof' || viewType === 'strengthsWeaknesses') {
+                 currentMainProofKey = key;
+                 currentOrganTypeKey = null;
+            } else if (viewType === 'organSpecificDetailed') {
+                currentMainProofKey = 'anatomicas'; 
+                currentOrganTypeKey = key;
+            }
+
+            let html = '';
+
+            if (key === 'inicio') {
+                html = `
+                    <div id="inicio-content" class="content-section active">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${item.icon}</span> ${item.title}</h2>
+                        <p class="text-slate-600 mb-6">${item.description}</p>
+                        <hr class="my-6">
+                        <div>${item.content}</div>
+                    </div>`;
+            } else if (key === 'explicacionDetallada') { 
+                 html = `
+                    <div id="${key}-content" class="content-section active">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${item.icon}</span> ${item.title}</h2>
+                        <p class="text-slate-600 mb-6">${item.description}</p>
+                        <button onclick="printOriginalText()" class="mb-6 bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg inline-flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5c.966 0 1.75.784 1.75 1.75v3.552c.377.046.752.097 1.126.153A2.224 2.224 0 0118.5 8.679V12.5a5 5 0 01-5 5h-7a5 5 0 01-5-5V8.679a2.224 2.224 0 012.374-2.217c.374-.056.75-.107 1.127-.153V2.75zm8.5 0V6.303a3.723 3.723 0 00-2.25.021V2.75a.25.25 0 00-.25-.25h-6.5a.25.25 0 00-.25.25v3.574a3.722 3.722 0 00-2.25-.021V2.75C5.5 2.06 6.06 1.5 6.75 1.5h6.5c.69 0 1.25.56 1.25 1.25zM10 10a1 1 0 00-1 1v.25a.75.75 0 001.5 0V11a1 1 0 00-1-1z" clip-rule="evenodd" /><path d="M5 10.5a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5A.75.75 0 015 10.5zM5 13a.75.75 0 01.75-.75h8.5a.75.75 0 010 1.5h-8.5A.75.75 0 015 13z" /></svg>
+                            Imprimir a PDF
+                        </button>
+                        <hr class="my-6">
+                        <div class="original-text-content prose prose-slate max-w-none text-slate-700 leading-relaxed text-justify">
+                            ${item.originalReportText}
+                        </div>
+                         <button onclick="renderContent('inicio')" class="mt-8 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg">Volver al Inicio</button>
+                    </div>
+                `;
+            } else if (key === 'cuestionario') {
+                 html = `
+                    <div id="${key}-content" class="content-section active">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${item.icon}</span> ${item.title}</h2>
+                        <p class="text-slate-600 mb-6">${item.description}</p>
+                        <hr class="my-6">
+                        <div id="quiz-container"></div>
+                    </div>`;
+            } else if (key === 'anatomicas' && viewType === 'main') { 
+                const anatomicasItem = data.anatomicas;
+                html = `
+                    <div id="anatomicas-intermediate" class="content-section active">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${anatomicasItem.icon}</span> ${anatomicasItem.title}</h2>
+                        <p class="text-slate-600 mb-6 text-justify">${anatomicasItem.description}</p>
+                        <hr class="my-6">
+                        <h3 class="text-xl font-semibold text-slate-700 mb-4">Tipos de Órganos y su Significado Evolutivo:</h3>
+                        <div class="grid md:grid-cols-3 gap-4 mb-6">
+                            ${Object.keys(anatomicasItem.organTypes).map(organKey => {
+                                const organ = anatomicasItem.organTypes[organKey];
+                                return `
+                                <button onclick="renderContent('${organKey}', 'organSpecificDetailed')" class="sub-nav-card bg-white p-4 rounded-lg shadow-md border-2 border-transparent text-left">
+                                    <span class="text-2xl">${organ.icon}</span>
+                                    <h4 class="font-bold mt-2 text-slate-800">${organ.title}</h4>
+                                    <p class="text-sm text-slate-500 mt-1">${organ.description}</p>
+                                </button>`;
+                            }).join('')}
+                        </div>
+                        <div class="mt-8 pt-6 border-t flex flex-col sm:flex-row gap-4">
+                            <button onclick="renderContent('anatomicas', 'strengthsWeaknesses')" class="analysis-card p-4 rounded-lg shadow hover:shadow-md transition-shadow w-full text-left">
+                                <h3 class="font-semibold text-sky-700 text-lg">🔎 Analizar Fortalezas y Debilidades de las Pruebas Anatómicas</h3>
+                            </button>
+                            <button onclick="renderContent('inicio')" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg h-full flex items-center justify-center w-full sm:w-auto mt-4 sm:mt-0">Volver al Inicio</button>
+                        </div>
+                    </div>`;
+            } else if (viewType === 'organSpecificDetailed') { 
+                 const organItem = data.anatomicas.organTypes[key];
+                 html = `
+                    <div id="${key}-organ-detailed" class="content-section active">
+                        <div class="flex flex-wrap gap-4 mb-6">
+                            <button onclick="renderContent('anatomicas', 'main')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" /></svg>
+                                Volver a Pruebas Anatómicas
+                            </button>
+                             <button onclick="renderContent('inicio')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path d="M9.25 3.5a.75.75 0 000 1.5h.5a.75.75 0 000-1.5h-.5zM6.25.75A.75.75 0 005.5 0H2.75a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h14.5a.75.75 0 00.75-.75V8.25a.75.75 0 00-1.5 0V13H4V1.5h1.5a.75.75 0 00.75-.75zM9.5 5a.75.75 0 00-1.28-.53L3.97 8.72a.75.75 0 000 1.06l4.25 4.25a.75.75 0 001.06-1.06L6.81 10l2.69-2.69A.75.75 0 009.5 5z" /></svg>
+                                Volver al Inicio
+                            </button>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${organItem.icon}</span> ${organItem.title}</h2>
+                        <div class="prose prose-slate max-w-none text-slate-700 leading-relaxed text-justify mb-6">${organItem.detailedText}</div>
+                        ${organItem.diagram ? `<div class="my-6">${organItem.diagram}</div>` : ''}
+                    </div>`;
+            } else if (viewType === 'detailedProof') { 
+                html = `
+                    <div id="${key}-detailed-content" class="content-section active">
+                         <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${item.icon}</span> ${item.title}</h2>
+                        <p class="text-slate-600 mb-6">${item.description}</p>
+                        <hr class="my-6">
+                        <div class="prose prose-slate max-w-none text-slate-700 leading-relaxed text-justify mb-6">${item.detailedText}</div>
+                        <div class="mt-8 pt-6 border-t flex flex-col sm:flex-row gap-4">
+                             <button onclick="renderContent('${key}', 'strengthsWeaknesses')" class="analysis-card p-4 rounded-lg shadow hover:shadow-md transition-shadow w-full text-left">
+                                <h3 class="font-semibold text-sky-700 text-lg">🔎 Analizar Fortalezas y Debilidades de esta Prueba</h3>
+                            </button>
+                            <button onclick="renderContent('inicio')" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg h-full flex items-center justify-center w-full sm:w-auto mt-4 sm:mt-0">Volver al Inicio</button>
+                        </div>
+                    </div>
+                `;
+            } else if (viewType === 'strengthsWeaknesses') {
+                const mainProofItem = data[currentMainProofKey]; 
+                html = `
+                    <div id="${currentMainProofKey}-analysis-content" class="content-section active">
+                        <button onclick="renderContent('${currentMainProofKey}', '${currentMainProofKey === 'anatomicas' ? 'main' : 'detailedProof'}')" class="mb-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg inline-flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" /></svg>
+                            Volver a ${mainProofItem.title}
+                        </button>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-4 flex items-center"><span class="text-3xl sm:text-4xl mr-3">${mainProofItem.icon}</span> Análisis de ${mainProofItem.title}</h2>
+                        <div class="mt-6 grid md:grid-cols-2 gap-x-8 gap-y-6">
+                            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <h3 class="font-bold text-xl text-green-800 mb-3">Puntos Fuertes como Evidencia Evolutiva</h3>
+                                <ul class="space-y-2 text-green-700 text-justify">
+                                    ${mainProofItem.strengths.map(s => `<li class="leading-relaxed"><span class="font-semibold">✔</span> ${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                                 <h3 class="font-bold text-xl text-red-800 mb-3">Consideraciones y Posibles Limitaciones</h3>
+                                <ul class="space-y-2 text-red-700 text-justify">
+                                    ${mainProofItem.weaknesses.map(w => `<li class="leading-relaxed"><span class="font-semibold">⚠️</span> ${w}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                        <button onclick="renderContent('inicio')" class="mt-8 bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-4 rounded-lg">Volver al Inicio</button>
+                    </div>
+                `;
+            }
+
+
+            contentArea.innerHTML = html;
+
+            document.querySelectorAll('.nav-card').forEach(card => {
+                card.classList.remove('active', 'current-section-active');
+                if (card.dataset.key === currentMainProofKey) { 
+                    card.classList.add(currentOrganTypeKey || viewType === 'strengthsWeaknesses' ? 'current-section-active' : 'active');
+                }
+            });
+            
+            if (key === 'inicio' && document.getElementById('overviewChart')) {
+                renderOverviewChart();
+            } else if (key === 'cuestionario') {
+                startQuiz();
+            }
+        }
+        
+        function renderNav() {
+            const keys = Object.keys(data);
+            mainNav.innerHTML = keys.map(key => {
+                const item = data[key];
+                let spanClass = '';
+                if (key === 'inicio') {
+                    spanClass = 'sm:col-span-2 md:col-span-3 lg:col-span-4';
+                }
+                return `
+                    <button data-key="${key}" class="nav-card text-left bg-white p-4 rounded-lg shadow-md border-2 border-transparent ${spanClass}">
+                        <span class="text-3xl">${item.icon}</span>
+                        <h3 class="font-bold mt-2 text-slate-800">${item.title}</h3>
+                        ${key === 'inicio' ? `<p class="text-sm text-slate-500 mt-1">${item.description.split('<br>')[0]}</p>` : ''}
+                    </button>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('.nav-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const key = e.currentTarget.dataset.key;
+                    if (key === 'inicio' || key === 'explicacionDetallada' || key === 'cuestionario') {
+                        renderContent(key); 
+                    } else if (key === 'anatomicas') {
+                        renderContent(key, 'main'); 
+                    }
+                    else {
+                        renderContent(key, 'detailedProof'); 
+                    }
+                });
+            });
+        }
+        
+        function renderOverviewChart() {
+            const ctx = document.getElementById('overviewChart').getContext('2d');
+            if (overviewChartInstance) { overviewChartInstance.destroy(); }
+            const chartData = { labels: ['Anatómicas', 'Paleontológicas', 'Biogeográficas', 'Embriológicas', 'Bioquímicas', 'Taxonómicas'], datasets: [{ label: 'Poder para establecer parentesco', data: [4, 4, 3, 3, 5, 3], backgroundColor: 'rgba(20, 184, 166, 0.6)', borderColor: 'rgba(13, 148, 136, 1)', borderWidth: 1 }, { label: 'Claridad como prueba de cambio', data: [3, 5, 4, 2, 4, 2], backgroundColor: 'rgba(51, 65, 85, 0.6)', borderColor: 'rgba(30, 41, 59, 1)', borderWidth: 1 }]};
+            overviewChartInstance = new Chart(ctx, { type: 'bar', data: chartData, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, max: 5, ticks: { stepSize: 1, callback: function(v) { return ['Nulo', 'Bajo', 'Medio', 'Fuerte', 'Muy Fuerte'][v] || ''; }} } }, plugins: { title: { display: true, text: 'Comparación de Utilidad de las Pruebas (Evaluación Cualitativa)', font: { size: 16 }, padding: {bottom: 20}, color: '#334155' }, legend: {labels: {boxWidth:15, padding:15}}, tooltip: { callbacks: {label: function(c){let l=c.dataset.label||'';if(l){l+=': '}const v=c.raw;l+=(['Nulo','Bajo','Medio','Fuerte','Muy Fuerte'][v]||'N/A');return l;}}}}}});
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            userScore = 0;
+            quizQuestions = data.cuestionario.questions.map(q => ({...q, answered: false, selectedOption: null, isCorrect: null }));
+            displayQuizQuestion();
+        }
+
+        function displayQuizQuestion() {
+            const quizContainer = document.getElementById('quiz-container');
+            if (!quizContainer) return;
+
+            if (currentQuestionIndex < quizQuestions.length) {
+                const q = quizQuestions[currentQuestionIndex];
+                let optionsHtml = q.options.map((opt, index) => `
+                    <div class="quiz-option border-2 border-slate-300 p-3 rounded-lg mb-2 hover:bg-teal-50" data-option-index="${index}">
+                        ${opt.text}
+                    </div>
+                `).join('');
+
+                quizContainer.innerHTML = `
+                    <div class="mb-4">
+                        <p class="text-slate-700 font-semibold text-lg">Pregunta ${currentQuestionIndex + 1} de ${quizQuestions.length}:</p>
+                        <p class="text-slate-800 text-xl mt-1">${q.text}</p>
+                    </div>
+                    <div id="quiz-options">${optionsHtml}</div>
+                    <div id="quiz-feedback" class="mt-4 p-3 rounded-lg text-sm"></div>
+                    <div class="mt-6 flex flex-col sm:flex-row gap-2">
+                        <button id="check-answer-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg w-full sm:w-auto">Comprobar</button>
+                        <button id="next-question-btn" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg w-full sm:w-auto" style="display:none;">Siguiente</button>
+                    </div>
+                `;
+
+                document.querySelectorAll('.quiz-option').forEach(optDiv => {
+                    optDiv.addEventListener('click', (e) => {
+                        if (q.answered) return;
+                        document.querySelectorAll('.quiz-option').forEach(d => d.classList.remove('selected', 'border-teal-500'));
+                        e.currentTarget.classList.add('selected', 'border-teal-500');
+                        q.selectedOption = parseInt(e.currentTarget.dataset.optionIndex);
+                    });
+                });
+
+                document.getElementById('check-answer-btn').addEventListener('click', checkAnswer);
+                document.getElementById('next-question-btn').addEventListener('click', () => {
+                    currentQuestionIndex++;
+                    displayQuizQuestion();
+                });
+
+            } else {
+                displayQuizResults();
+            }
+        }
+
+        function checkAnswer() {
+            const q = quizQuestions[currentQuestionIndex];
+            if (q.selectedOption === null) {
+                document.getElementById('quiz-feedback').innerHTML = `<p class="text-red-600 font-semibold">Por favor, selecciona una opción.</p>`;
+                document.getElementById('quiz-feedback').classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+                return;
+            }
+
+            q.answered = true;
+            const selectedOptEl = document.querySelector(`.quiz-option[data-option-index="${q.selectedOption}"]`);
+            const feedbackEl = document.getElementById('quiz-feedback');
+            
+            if (q.options[q.selectedOption].correct) {
+                userScore++;
+                q.isCorrect = true;
+                selectedOptEl.classList.remove('selected', 'border-teal-500');
+                selectedOptEl.classList.add('correct');
+                feedbackEl.innerHTML = `<p class="font-semibold">${q.feedback || '¡Correcto!'}</p>`;
+                feedbackEl.className = 'mt-4 p-3 rounded-lg text-sm bg-green-100 text-green-700';
+            } else {
+                q.isCorrect = false;
+                selectedOptEl.classList.remove('selected', 'border-teal-500');
+                selectedOptEl.classList.add('incorrect');
+                q.options.forEach((opt, index) => {
+                    if (opt.correct) {
+                        document.querySelector(`.quiz-option[data-option-index="${index}"]`).classList.add('correct');
+                    }
+                });
+                feedbackEl.innerHTML = `<p class="font-semibold">Incorrecto. ${q.feedback || ''}</p>`;
+                feedbackEl.className = 'mt-4 p-3 rounded-lg text-sm bg-red-100 text-red-700';
+            }
+
+            document.getElementById('check-answer-btn').style.display = 'none';
+            document.getElementById('next-question-btn').style.display = 'inline-block';
+            document.querySelectorAll('.quiz-option').forEach(optDiv => {
+                optDiv.style.pointerEvents = 'none'; 
+            });
+        }
+
+        function displayQuizResults() {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = `
+                <h3 class="text-2xl font-bold text-slate-800 mb-4">Resultados del Cuestionario</h3>
+                <p class="text-lg text-slate-700 mb-2">Has acertado ${userScore} de ${quizQuestions.length} preguntas.</p>
+                <p class="text-2xl font-bold mb-6 ${userScore / quizQuestions.length >= 0.7 ? 'text-green-600' : 'text-red-600'}">
+                    Puntuación: ${((userScore / quizQuestions.length) * 100).toFixed(0)}%
+                </p>
+                <div class="mb-6">
+                    ${quizQuestions.map((q, i) => `
+                        <div class="p-3 mb-2 border rounded-md ${q.isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}">
+                            <p class="font-semibold text-slate-700">P${i+1}: ${q.text}</p>
+                            <p class="text-sm ${q.isCorrect ? 'text-green-700' : 'text-red-700'}">
+                                Tu respuesta: ${q.options[q.selectedOption]?.text || 'No respondida'} - ${q.isCorrect ? 'Correcta' : 'Incorrecta'}.
+                            </p>
+                        </div>
+                    `).join('')}
+                </div>
+                <button id="restart-quiz-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2 px-6 rounded-lg w-full sm:w-auto">Intentar de Nuevo</button>
+            `;
+            document.getElementById('restart-quiz-btn').addEventListener('click', startQuiz);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNav();
+            renderContent('inicio'); 
+        });
+    </script>
+</body>
+</html>
